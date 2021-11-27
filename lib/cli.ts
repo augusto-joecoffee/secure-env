@@ -14,14 +14,14 @@ import log, { logTypes } from './utils/log'
 const argv = minimist(process.argv.slice(2))
 
 const outputFile = argv.out || argv.o
-const inputFile = argv._[0]
+const inputFile = argv._[0] || argv.i
 const secret = argv.secret || argv.s
 const encryptionAlgo = argv.algo || argv.a
 
 // should decrypt or encrypt ?
 if (argv.decrypt || argv.d)
 	log(
-		decrypt({ secret, file: outputFile, decryptionAlgo: encryptionAlgo }),logTypes.INFO
+		decrypt({ secret, inputFile, outputFile, decryptionAlgo: encryptionAlgo }),logTypes.INFO
 	)
 else
 	encrypt({ secret, inputFile, outputFile, encryptionAlgo });

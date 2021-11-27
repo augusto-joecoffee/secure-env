@@ -6,29 +6,35 @@ import log, { logTypes } from './utils/log'
  * --secret <secretKey>  | -s <secretKey>
  * --out <file-path> | -o <file-path>
  * --algo <algoName> |  -a <algoName>
- * --decrypt | -d 
+ * --decrypt | -d
  */
 
 export interface IDecryptOptions {
-  /** 
+  /**
    * The secret key needed to encrypt/decrypt the file.\
    * `Required`
    * */
   secret: string;
 
-  /** 
-   * Path to the encrypted env file.\
-   * Default: `.env.enc`
+  /**
+   * The env file to encrypt.\
+   * Default: `.env`
    * */
-  file?: fs.PathLike;
+  inputFile?: fs.PathLike;
 
-  /** 
+  /**
+   * The path and name of the generated file \
+   * Default: `${inputFile}.enc`
+   * */
+  outputFile?: fs.PathLike;
+
+  /**
    * The decryption algorithm to use.\
    * Default: `aes256`
    * */
   decryptionAlgo?: crypto.CipherGCMTypes;
 
-  /** 
+  /**
    * IV length.\
    * Default: `16`
    * */
@@ -36,31 +42,31 @@ export interface IDecryptOptions {
 }
 
 export interface IEncryptOptions {
-  /** 
+  /**
    * The secret key needed to encrypt/decrypt the file.\
    * **Required**
    * */
   secret: string;
 
-  /** 
+  /**
    * The env file to encrypt.\
    * Default: `.env`
    * */
   inputFile?: fs.PathLike;
 
-  /** 
+  /**
    * The path and name of the generated file \
    * Default: `${inputFile}.enc`
    * */
   outputFile?: fs.PathLike;
 
-  /** 
+  /**
    * The encryption algorithm to use.\
    * Default: `aes256`
    * */
   encryptionAlgo: crypto.CipherGCMTypes
 
-  /** 
+  /**
    * IV length.\
    * Default: `16`
    * */
@@ -71,7 +77,7 @@ export interface IEncryptOptions {
 export const decrypt = (options: IDecryptOptions) => {
   try {
     const secret = options.secret || 'mySecret'
-    const inputFile = options.file || '.env.enc'
+    const inputFile = options.inputFile || '.env.enc'
     const decryptionAlgo = options.decryptionAlgo || 'aes256'
     const ivLength = options.ivLength || 16
 

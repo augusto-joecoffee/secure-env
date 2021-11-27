@@ -1,6 +1,6 @@
 {
-  "name": "secure-env",
-  "version": "1.2.1",
+  "name": "secure-env-ts",
+  "version": "1.2.4",
   "description": "Use ENVs securely with encryption",
   "license": "MIT",
   "author": "kunalpanchal",
@@ -20,8 +20,7 @@
     "test:secure-env": "cd ./test && ../dist/cli.js -s mySecret",
     "watch-build": "tsc --watch",
     "build": "tsc",
-    "recreate-build": "npx rimraf ./dist && yarn build",
-    "prepublish": "yarn recreate-build"
+    "prepublish": "yarn build"
   },
   "repository": {
     "type": "git",
@@ -40,7 +39,6 @@
   "devDependencies": {
     "@types/minimist": "^1.2.2",
     "@types/node": "^16.10.2",
-    "rimraf": "^3.0.0",
     "ts-node": "^10.2.1",
     "typescript": "^4.4.3"
   },
