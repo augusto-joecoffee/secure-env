@@ -71,6 +71,9 @@ export interface IEncryptOptions {
    * Default: `16`
    * */
   ivLength?: number;
+
+
+  isEdit?: boolean;
 }
 
 // In the code
@@ -112,6 +115,7 @@ export const encrypt = (options: IEncryptOptions) => {
     const outputFilePath = options.outputFile || `${inputFile}.enc`
     const encryptionAlgo = options.encryptionAlgo || 'aes256'
     const ivLength = options.ivLength || 16
+    const isEdit = options.isEdit
 
     // presumably createCipheriv() should work for all the algo in ./openssl_list-cipher-algorithms.csv with the right key/iv length
 
@@ -121,20 +125,25 @@ export const encrypt = (options: IEncryptOptions) => {
     if (!secret || typeof secret !== 'string')
       throw new Error('No SecretKey provided.Use -s option to specify secret');
 
-    const key = crypto.createHash('sha256').update(String(secret)).digest() // /// TODO: node v10.5.0+ should use crypto.scrypt(secret, salt, keylen[, options], callback)
+    return new Promise<void>(resolve => {
+      const key = crypto.createHash('sha256').update(String(secret)).digest() // /// TODO: node v10.5.0+ should use crypto.scrypt(secret, salt, keylen[, options], callback)
 
-    const iv = crypto.randomBytes(ivLength)
-    const cipher = crypto.createCipheriv(encryptionAlgo, key, iv)
-    const output = fs.createWriteStream(outputFilePath)
+      const iv = crypto.randomBytes(ivLength)
+      const cipher = crypto.createCipheriv(encryptionAlgo, key, iv)
+      const output = fs.createWriteStream(outputFilePath)
 
-    output.write(iv)
-    fs.createReadStream(inputFile).pipe(cipher).pipe(output)
+      output.write(iv)
+      fs.createReadStream(inputFile).pipe(cipher).pipe(output)
 
-    output.on('finish', () => {
-      log(`The Environment file "${inputFile}" has been encrypted to "${outputFilePath}".`, logTypes.INFO);
-      log(`Make sure to delete "${inputFile}" for production use.`, logTypes.WARN);
+      output.on('finish', () => {
+        if (!isEdit) {
+          log(`The Environment file "${inputFile}" has been encrypted to "${outputFilePath}".`, logTypes.INFO);
+          log(`Make sure to delete "${inputFile}" for production use.`, logTypes.WARN);
+        }
+
+        resolve();
+      })
     })
-
   } catch (e) {
     log(e, logTypes.ERROR)
   }
