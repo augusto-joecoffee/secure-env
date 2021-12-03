@@ -47,8 +47,10 @@ if (argv.decrypt || argv.d) {
 	console.log(colors.bold.white('Opening your text editor...'));
 	const code = commandExists('code') ? 'code' : null;
 	const nano = commandExists('nano') ? 'nano' : null;
+	const atom = commandExists('atom') ? 'atom' : null;
+	const sublime = commandExists('subl') ? 'subl' : null;
 	const vim = commandExists('vim') ? 'vim' : null;
-	const usersEditor: any = process.env.EDITOR || nano || code || vim || 'vi';
+	const usersEditor: any = process.env.EDITOR || nano || code || sublime || atom || vim || 'vi';
 
 	const childProcess = spawn(usersEditor, [file], {
 		stdio: 'inherit',
@@ -105,7 +107,7 @@ if (argv.decrypt || argv.d) {
 		});
 	}
 
-	if (!code) {
+	if (usersEditor !== 'code') {
 		childProcess.on('exit', diffAndSave)
 	} else {
 		const watcher = fs.watch(path, (evenType: any) => {
