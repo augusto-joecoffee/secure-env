@@ -35,7 +35,7 @@ if (argv.decrypt || argv.d) {
 	const file: any = '.env.temp';
 	const path: PathLike = `./${file}`
 
-	const clean = () => fs.unlinkSync(path);
+	const clean = () => fs.existsSync(path) && fs.unlinkSync(path);
 	process.on('exit', clean)
 	process.on('SIGINT', clean)
 	process.on('SIGUSR1', clean)
