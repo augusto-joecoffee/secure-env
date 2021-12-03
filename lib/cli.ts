@@ -35,6 +35,13 @@ if (argv.decrypt || argv.d) {
 	const file: any = '.env.temp';
 	const path: PathLike = `./${file}`
 
+	const clean = () => fs.unlinkSync(path);
+	process.on('exit', clean)
+	process.on('SIGINT', clean)
+	process.on('SIGUSR1', clean)
+	process.on('SIGUSR2', clean)
+	process.on('uncaughtException', clean)
+
 	fs.writeFileSync(path, decrypted);
 
 	console.log(colors.bold.white('Opening your text editor...'));
@@ -42,12 +49,73 @@ if (argv.decrypt || argv.d) {
 	const nano = commandExists('nano') ? 'nano' : null;
 	const vim = commandExists('vim') ? 'vim' : null;
 	const usersEditor: any = process.env.EDITOR || nano || code || vim || 'vi';
+
 	const childProcess = spawn(usersEditor, [file], {
 		stdio: 'inherit',
 		detached: true
 	})
 
-	childProcess.on('data', () => process.exit())
+	let saved = false;
+
+	const diffAndSave = () => {
+		if (saved) { return; }
+		saved = true;
+		const newEnvVars = fs.readFileSync(path);
+		const envVarsDiff = diff.diffLines(
+			decrypted,
+			newEnvVars.toString()
+		)
+
+		const removed = (envVarsDiff.filter(line => line.removed))?.map((line) => line.value);
+		const added = (envVarsDiff.filter(line => line.added))?.map((line) => line.value);
+
+		if (!removed.length && !added.length) {
+			abort()
+		}
+		console.log(colors.bold.white('Your changes:'));
+		console.log('\n');
+		console.log(colors.bold.underline.red('Removed:'));
+		console.log('\n');
+		console.log(colors.red(removed.join('\n')));
+		console.log('\n');
+		console.log(colors.bold.underline.green('Added:'));
+		console.log('\n');
+		console.log(colors.green(added.join('\n')));
+		console.log('\n');
+
+		inquirer.prompt([{
+			name:'continue',
+			type: 'string',
+			message: 'Encrypt? Yes/ No',
+		}]).then((answers) => {
+			if (['yes', 'y'].includes(answers.continue.toLowerCase())) {
+				encrypt({ secret, inputFile: file, outputFile: inputFile, encryptionAlgo, isEdit: true })?.then(() => {
+					fs.unlinkSync(path);
+					console.log('\n');
+					console.log(colors.bold.white(`All done!`))
+					console.log(colors.bold.white(`The Environment file "${inputFile}" has been edited.`))
+					console.log(colors.bold.white(`Don't forget to push and commit "${inputFile}"".`))
+					console.log('\n');
+
+					process.exit(0);
+				});
+			} else {
+				abort();
+			}
+		});
+	}
+
+	if (!code) {
+		childProcess.on('exit', diffAndSave)
+	} else {
+		const watcher = fs.watch(path, (evenType: any) => {
+			if (evenType === "change") {
+				console.log(colors.bold.white(`File saved!`))
+				diffAndSave()
+				watcher.close()
+			}
+		});
+	}
 
 	const abort = () => {
 		fs.unlinkSync(path);
@@ -56,62 +124,8 @@ if (argv.decrypt || argv.d) {
 		console.log('\n');
 
 		process.exit(0);
-
 	}
 
-	let saved = false;
-
-	fs.watch(path, (evenType: any) => {
-		console.log(evenType)
-		if (evenType === "change") {
-			if (saved) { return; }
-			saved = true;
-			const newEnvVars = fs.readFileSync(path);
-			const envVarsDiff = diff.diffLines(
-				decrypted,
-				newEnvVars.toString()
-			)
-
-			const removed = (envVarsDiff.filter(line => line.removed))?.map((line) => line.value);
-			const added = (envVarsDiff.filter(line => line.added))?.map((line) => line.value);
-
-			if (!removed.length && !added.length) {
-				abort()
-			}
-			console.log(colors.bold.white('Your changes:'));
-			console.log('\n');
-			console.log(colors.bold.underline.red('Removed:'));
-			console.log('\n');
-			console.log(colors.red(removed.join('\n')));
-			console.log('\n');
-			console.log(colors.bold.underline.green('Added:'));
-			console.log('\n');
-			console.log(colors.green(added.join('\n')));
-			console.log('\n');
-
-			inquirer.prompt([{
-				name:'continue',
-				type: 'string',
-				message: 'Encrypt? Yes/ No',
-			}]).then((answers) => {
-				if (['yes', 'y'].includes(answers.continue.toLowerCase())) {
-					encrypt({ secret, inputFile: file, outputFile: inputFile, encryptionAlgo, isEdit: true })?.then(() => {
-						fs.unlinkSync(path);
-						console.log('\n');
-						console.log(colors.bold.white(`All done!`))
-						console.log(colors.bold.white(`The Environment file "${inputFile}" has been edited.`))
-						console.log(colors.bold.white(`Don't forget to push and commit "${inputFile}"".`))
-						console.log('\n');
-
-						process.exit(0);
-					});
-				} else {
-					abort();
-				}
-			});
-		}
-	}
-	);
 } else {
 	encrypt({ secret, inputFile, outputFile, encryptionAlgo });
 }
