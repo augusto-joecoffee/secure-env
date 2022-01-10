@@ -73,9 +73,13 @@ if (argv.decrypt || argv.d) {
     if (saved) {
       return;
     }
+
     saved = true;
+
     const newEnvVars = fs.readFileSync(path);
-    const envVarsDiff = diff.diffTrimmedLines(decrypted, newEnvVars.toString());
+    const envVarsDiff = diff.diffLines(decrypted, newEnvVars.toString(), {
+      newlineIsToken: true,
+    });
 
     const removed = envVarsDiff
       .filter((line) => line.removed)
@@ -88,6 +92,7 @@ if (argv.decrypt || argv.d) {
     if (!removed.length && !added.length) {
       abort();
     }
+
     console.log(bold(white("Your changes:")));
     console.log("\n");
     console.log(bold(underline(red("Removed:"))));

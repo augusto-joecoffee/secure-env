@@ -1,6 +1,6 @@
 {
   "name": "secure-env-ts",
-  "version": "1.3.2",
+  "version": "1.3.4",
   "description": "Use ENVs securely with encryption",
   "license": "MIT",
   "author": "kunalpanchal",
