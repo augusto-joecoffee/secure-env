@@ -75,11 +75,12 @@ if (argv.decrypt || argv.d) {
     }
     saved = true;
     const newEnvVars = fs.readFileSync(path);
-    const envVarsDiff = diff.diffLines(decrypted, newEnvVars.toString());
+    const envVarsDiff = diff.diffTrimmedLines(decrypted, newEnvVars.toString());
 
     const removed = envVarsDiff
       .filter((line) => line.removed)
       ?.map((line) => line.value);
+
     const added = envVarsDiff
       .filter((line) => line.added)
       ?.map((line) => line.value);
