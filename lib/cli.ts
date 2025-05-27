@@ -27,7 +27,7 @@ const encryptionAlgo = argv.algo || argv.a;
 // should decrypt or encrypt ?
 if (argv.decrypt || argv.d) {
   log(
-    decrypt({ secret, inputFile, outputFile, decryptionAlgo: encryptionAlgo }),
+    decrypt({ secret, inputFile, outputFile }),
     logTypes.INFO
   );
 } else if (argv.edit || argv.e) {
@@ -35,7 +35,6 @@ if (argv.decrypt || argv.d) {
     secret,
     inputFile,
     outputFile,
-    decryptionAlgo: encryptionAlgo,
   });
   if (!decrypted) {
     process.exit(1);
@@ -118,26 +117,23 @@ if (argv.decrypt || argv.d) {
             secret,
             inputFile: file,
             outputFile: inputFile,
-            encryptionAlgo,
             isEdit: true,
-          })?.then(() => {
-            fs.unlinkSync(path);
-            console.log("\n");
-            console.log(bold(white(`All done!`)));
-            console.log(
-              bold(
-                white(`The Environment file "${inputFile}" has been edited.`)
-              )
-            );
-            console.log(
-              bold(white(`Don't forget to push and commit "${inputFile}"".`))
-            );
-            console.log("\n");
+          })
 
-            process.exit(0);
-          });
-        } else {
-          abort();
+          fs.unlinkSync(path);
+          console.log("\n");
+          console.log(bold(white(`All done!`)));
+          console.log(
+            bold(
+              white(`The Environment file "${inputFile}" has been edited.`)
+            )
+          );
+          console.log(
+            bold(white(`Don't forget to push and commit "${inputFile}"".`))
+          );
+          console.log("\n");
+
+          process.exit(0);
         }
       });
   };
@@ -163,5 +159,5 @@ if (argv.decrypt || argv.d) {
     process.exit(0);
   };
 } else {
-  encrypt({ secret, inputFile, outputFile, encryptionAlgo });
+  encrypt({ secret, inputFile, outputFile });
 }

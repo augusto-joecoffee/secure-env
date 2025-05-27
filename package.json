@@ -1,6 +1,6 @@
 {
   "name": "secure-env-ts",
-  "version": "1.3.4",
+  "version": "2.0.0",
   "description": "Use ENVs securely with encryption",
   "license": "MIT",
   "author": "kunalpanchal",
@@ -24,12 +24,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/kunalpanchal/secure-env.git"
+    "url": "https://github.com/augusto-joecoffee/secure-env"
   },
-  "bugs": {
-    "url": "https://github.com/kunalpanchal/secure-env/issues"
-  },
-  "homepage": "https://github.com/kunalpanchal/secure-env#readme",
   "keywords": [
     "dotenv",
     "secure-env",
@@ -48,6 +44,7 @@
   "dependencies": {
     "colorette": "^2.0.16",
     "command-exists": "^1.2.9",
+    "cryptr": "^6.3.0",
     "diff": "^5.0.0",
     "inquirer": "^8.2.0",
     "minimist": "^1.2.0"

@@ -1,6 +1,6 @@
-import crypto from 'crypto'
 import fs from 'fs'
 import log, { logTypes } from './utils/log'
+import Cryptr from 'cryptr';
 
 /* Arguments that can be passed are
  * --secret <secretKey>  | -s <secretKey>
@@ -27,18 +27,6 @@ export interface IDecryptOptions {
    * Default: `${inputFile}.enc`
    * */
   outputFile?: fs.PathLike;
-
-  /**
-   * The decryption algorithm to use.\
-   * Default: `aes256`
-   * */
-  decryptionAlgo?: crypto.CipherGCMTypes;
-
-  /**
-   * IV length.\
-   * Default: `16`
-   * */
-  ivLength?: number;
 }
 
 export interface IEncryptOptions {
@@ -60,19 +48,6 @@ export interface IEncryptOptions {
    * */
   outputFile?: fs.PathLike;
 
-  /**
-   * The encryption algorithm to use.\
-   * Default: `aes256`
-   * */
-  encryptionAlgo: crypto.CipherGCMTypes
-
-  /**
-   * IV length.\
-   * Default: `16`
-   * */
-  ivLength?: number;
-
-
   isEdit?: boolean;
 }
 
@@ -80,9 +55,8 @@ export interface IEncryptOptions {
 export const decrypt = (options: IDecryptOptions) => {
   try {
     const secret = options.secret || 'mySecret'
+    const cryptr = new Cryptr(secret);
     const inputFile = options.inputFile || '.env.enc'
-    const decryptionAlgo = options.decryptionAlgo || 'aes256'
-    const ivLength = options.ivLength || 16
 
     if (!fs.existsSync(inputFile))
       throw new Error(`${inputFile} does not exist.`)
@@ -91,15 +65,7 @@ export const decrypt = (options: IDecryptOptions) => {
       throw new Error('No SecretKey provided.')
 
     const fileBuffer = fs.readFileSync(inputFile)
-    const iv = fileBuffer.slice(0, ivLength)
-    const ciphertext = fileBuffer.slice(ivLength, fileBuffer.length)
-    const key = crypto.createHash('sha256').update(String(secret)).digest()
-    const decipher = crypto.createDecipheriv(decryptionAlgo, key, iv)
-
-    //@ts-expect-error
-    let decrypted = decipher.update(ciphertext, 'hex', 'utf8')
-    //@ts-expect-error
-    decrypted += decipher.final('utf8')
+    const decrypted = cryptr.decrypt(fileBuffer.toString('utf8'))
 
     return decrypted
   } catch (e) {
@@ -113,8 +79,6 @@ export const encrypt = (options: IEncryptOptions) => {
     const secret = options.secret || 'mySecret'
     const inputFile = options.inputFile || '.env'
     const outputFilePath = options.outputFile || `${inputFile}.enc`
-    const encryptionAlgo = options.encryptionAlgo || 'aes256'
-    const ivLength = options.ivLength || 16
     const isEdit = options.isEdit
 
     // presumably createCipheriv() should work for all the algo in ./openssl_list-cipher-algorithms.csv with the right key/iv length
@@ -125,25 +89,17 @@ export const encrypt = (options: IEncryptOptions) => {
     if (!secret || typeof secret !== 'string')
       throw new Error('No SecretKey provided.Use -s option to specify secret');
 
-    return new Promise<void>(resolve => {
-      const key = crypto.createHash('sha256').update(String(secret)).digest() // /// TODO: node v10.5.0+ should use crypto.scrypt(secret, salt, keylen[, options], callback)
+    const cryptr = new Cryptr(secret);
+    const input = fs.readFileSync(inputFile).toString('utf8');
+    const encrypted = cryptr.encrypt(input)
 
-      const iv = crypto.randomBytes(ivLength)
-      const cipher = crypto.createCipheriv(encryptionAlgo, key, iv)
-      const output = fs.createWriteStream(outputFilePath)
+    fs.writeFileSync(outputFilePath, encrypted);
 
-      output.write(iv)
-      fs.createReadStream(inputFile).pipe(cipher).pipe(output)
+    if (!isEdit) {
+      log(`The Environment file "${inputFile}" has been encrypted to "${outputFilePath}".`, logTypes.INFO);
+      log(`Make sure to delete "${inputFile}" for production use.`, logTypes.WARN);
+    }
 
-      output.on('finish', () => {
-        if (!isEdit) {
-          log(`The Environment file "${inputFile}" has been encrypted to "${outputFilePath}".`, logTypes.INFO);
-          log(`Make sure to delete "${inputFile}" for production use.`, logTypes.WARN);
-        }
-
-        resolve();
-      })
-    })
   } catch (e) {
     log(e, logTypes.ERROR)
   }
