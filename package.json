@@ -20,7 +20,6 @@
     "test:secure-env": "cd ./test && ../dist/cli.js -s mySecret",
     "watch-build": "tsc --watch",
     "build": "tsc",
-    "prepublish": "yarn build"
   },
   "repository": {
     "type": "git",
