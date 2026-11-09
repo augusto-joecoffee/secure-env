@@ -19,7 +19,7 @@
     "test": "cd ./test && ts-node ./index.ts",
     "test:secure-env": "cd ./test && ../dist/cli.js -s mySecret",
     "watch-build": "tsc --watch",
-    "build": "tsc",
+    "build": "tsc"
   },
   "repository": {
     "type": "git",
